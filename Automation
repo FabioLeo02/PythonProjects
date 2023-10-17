@@ -1,0 +1,6 @@
+import requests 
+from bs4 import BeautifulSoup
+
+link = "https://transparencia.ma.gov.br/app/v2/pessoal/remuneracao"
+requisicao = requests.get(link)
+print(requisicao.text)
