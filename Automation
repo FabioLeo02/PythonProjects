@@ -3,25 +3,41 @@ from bs4 import BeautifulSoup
 import re
 
 
-link = "https://transparencia.ma.gov.br/app/v2/pessoal/remuneracao?ano=2023&nome=&ug=SEDUC&mes=9&tipo_busca=unidade&table-limit=100&table_order_by=nome&table_order_by_ordenacao=asc&table-query=#result_list"
-requisicao = requests.get(link)
 
-site = BeautifulSoup(requisicao.text, "html.parser")
+paginaAtual = 1
 
-print(requisicao)
+todos_os_hrefs= []
+while paginaAtual <= 5:
+    link = f"https://transparencia.ma.gov.br/app/v2/pessoal/remuneracao?ano=2023&ug=SEDUC&mes=9&tipo_busca=unidade&table-limit=100&table_order_by=nome&table_order_by_ordenacao=asc&page={paginaAtual}#result_list"
+    requisicao = requests.get(link)
+    site = BeautifulSoup(requisicao.text, "html.parser")
+    print(requisicao)
+    
+    href_da_pagina_atual = site.find_all("a")
+
+
+# Tudo okay, agora preciso fazer a validação para salvar apenas de 109, até 208. assim pegando todas as 
+# matriculas da pagina, e salvando-as, e junto com essa validação, devo usar a regex apenas no fim,
+#  quando o array com 35 mil dados estiver completo. assim percorrerei uma a uma para deixar somente a matricula.
+
+
+    todos_os_hrefs.append(href_da_pagina_atual) 
 
 
 
-todos_os_href_com_matricula = site.find_all("a")
-# na primeira página, as matricula estão de 109 até 
+    paginaAtual += 1
+
+
+# em todas as páginas, as matricula estão de 109 até 208, preciso fazer essa filtragem, porque senão vai repetir 2 vezes as mesmas matriculas
+
 
 
 
 
 #Filtragem do href, armazenando apenas a matrícula
-
-print(todos_os_href_com_matricula[208]["href"])
-matricula_aleatoria = todos_os_href_com_matricula[208]["href"]
-matricula_match = re.search(r'matricula=([\w]+)', matricula_aleatoria)
-valor_matricula = matricula_match.group(1)
-print(f"Matricula: {valor_matricula}")
+print(todos_os_hrefs)
+# print(todos_os_hrefs[208]["href"])
+# matricula_aleatoria = todos_os_hrefs[208]["href"]
+# matricula_match = re.search(r'matricula=([\w]+)', matricula_aleatoria)
+# valor_matricula = matricula_match.group(1)
+# print(f"Matricula: {valor_matricula}")
