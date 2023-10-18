@@ -1,6 +1,27 @@
 import requests 
 from bs4 import BeautifulSoup
+import re
 
-link = "https://transparencia.ma.gov.br/app/v2/pessoal/remuneracao"
+
+link = "https://transparencia.ma.gov.br/app/v2/pessoal/remuneracao?ano=2023&nome=&ug=SEDUC&mes=9&tipo_busca=unidade&table-limit=100&table_order_by=nome&table_order_by_ordenacao=asc&table-query=#result_list"
 requisicao = requests.get(link)
-print(requisicao.text)
+
+site = BeautifulSoup(requisicao.text, "html.parser")
+
+print(requisicao)
+
+
+
+todos_os_href_com_matricula = site.find_all("a")
+# na primeira página, as matricula estão de 109 até 
+
+
+
+
+#Filtragem do href, armazenando apenas a matrícula
+
+print(todos_os_href_com_matricula[208]["href"])
+matricula_aleatoria = todos_os_href_com_matricula[208]["href"]
+matricula_match = re.search(r'matricula=([\w]+)', matricula_aleatoria)
+valor_matricula = matricula_match.group(1)
+print(f"Matricula: {valor_matricula}")
