@@ -1,43 +1,53 @@
-import requests 
-from bs4 import BeautifulSoup
-import re
+# Automatização de Matricula - feito por Fabio Leandro e Dayvid Moreno
+from bs4 import BeautifulSoup  # Biblioteca para fazer o parsing de HTML
+import requests  # Biblioteca para fazer solicitações HTTP
+import pandas as pd  # Biblioteca para trabalhar com dados em formato de DataFrame
 
+# Inicializa a variável para controlar a página atual
+pagina_atual = 1
 
+# Cria um conjunto para armazenar as matrículas únicas
+todas_as_matriculas = set()
 
-paginaAtual = 1
+# Enquanto a página atual for menor ou igual ao valor selecionado, continue a busca
+while pagina_atual <= 1:
+    # Constrói a URL com base na página atual
+    url = f"https://transparencia.ma.gov.br/app/v2/pessoal/remuneracao?ano=2023&ug=SEDUC&mes=9&tipo_busca=unidade&table-limit=100&table_order_by=nome&table_order_by_ordenacao=asc&page={pagina_atual}#result_list"
 
-todos_os_hrefs= []
-while paginaAtual <= 5:
-    link = f"https://transparencia.ma.gov.br/app/v2/pessoal/remuneracao?ano=2023&ug=SEDUC&mes=9&tipo_busca=unidade&table-limit=100&table_order_by=nome&table_order_by_ordenacao=asc&page={paginaAtual}#result_list"
-    requisicao = requests.get(link)
-    site = BeautifulSoup(requisicao.text, "html.parser")
-    print(requisicao)
-    
-    href_da_pagina_atual = site.find_all("a")
+    # Faz uma requisição HTTP para obter o conteúdo da página
+    resposta = requests.get(url)
+    print(resposta)
+    print("A página atual é:",pagina_atual )
+    # Verifica se a requisição foi bem-sucedida (código 200 indica sucesso)
+    if resposta.status_code == 200:
+        # Faz o parsing do conteúdo da página com BeautifulSoup
+        soup = BeautifulSoup(resposta.text, 'html.parser')
 
+        # Encontra todas as tags <a> que contenham a palavra "matricula" no atributo href
+        links_com_matricula = soup.find_all('a', href=lambda href: href and 'matricula' in href)
 
-# Tudo okay, agora preciso fazer a validação para salvar apenas de 109, até 208. assim pegando todas as 
-# matriculas da pagina, e salvando-as, e junto com essa validação, devo usar a regex apenas no fim,
-#  quando o array com 35 mil dados estiver completo. assim percorrerei uma a uma para deixar somente a matricula.
+        # Itera sobre os links encontrados e obtém o valor da matrícula
+        for link in links_com_matricula:
+            href = link['href']
+            matricula_inicio = href.find('matricula=') + len('matricula=')
+            matricula_fim = href.find('&', matricula_inicio)
+            matricula = href[matricula_inicio:matricula_fim]
+            todas_as_matriculas.add(matricula)  # Adiciona à coleção para garantir matrículas únicas
+            # print("Matrícula encontrada:", matricula)
+    else:
+        print("Falha ao buscar a página:", resposta.status_code)
 
+    # Avança para a próxima página
+    pagina_atual += 1
 
-    todos_os_hrefs.append(href_da_pagina_atual) 
+# Converte o conjunto de matrículas para uma lista
+lista_matriculas = list(todas_as_matriculas)
 
+# Cria um DataFrame do pandas com as matrículas
+df = pd.DataFrame({'Matrícula': lista_matriculas})
 
+# Salva o DataFrame em um arquivo Excel
+df.to_excel('matriculas-transparencia.xlsx', index=False)
 
-    paginaAtual += 1
-
-
-# em todas as páginas, as matricula estão de 109 até 208, preciso fazer essa filtragem, porque senão vai repetir 2 vezes as mesmas matriculas
-
-
-
-
-
-#Filtragem do href, armazenando apenas a matrícula
-print(todos_os_hrefs)
-# print(todos_os_hrefs[208]["href"])
-# matricula_aleatoria = todos_os_hrefs[208]["href"]
-# matricula_match = re.search(r'matricula=([\w]+)', matricula_aleatoria)
-# valor_matricula = matricula_match.group(1)
-# print(f"Matricula: {valor_matricula}")
+# Imprime uma mensagem de conclusão
+print("Todas as matrículas únicas encontradas foram salvas no arquivo 'matriculas-transparencia.xlsx'.")
